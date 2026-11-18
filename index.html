@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jacek Ewertowski</title>
+<meta name="description" content="Notes, design documents and proposals on Istio, service mesh and Kubernetes networking.">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site-head">
+  <div>
+    <h1>Jacek Ewertowski</h1>
+    <p class="role">Service mesh &amp; Kubernetes networking</p>
+    <p class="bio">Design documents, proposals and notes — mostly about Istio: its control plane,
+    certificate and credential handling, and the parts of Kubernetes it leans on.</p>
+  </div>
+  <nav class="links">
+    <a href="https://github.com/jewertow">GitHub</a>
+    <a href="mailto:jacek.ewertowski1@gmail.com">Email</a>
+  </nav>
+</header>
+
+<h2 class="sect">Categories</h2>
+<div class="grid g2">
+
+  <a class="card" href="/istio-proposals/">
+    <h3>Istio proposals</h3>
+    <p>Design proposals and architecture write-ups for Istio, with diagrams of the flows they change.</p>
+    <div class="meta"><span class="badge violet">1 proposal</span><span>Secretless control plane</span></div>
+  </a>
+
+  <div class="card soon">
+    <h3>Notes</h3>
+    <p>Shorter write-ups on Kubernetes networking, mTLS and debugging the data plane.</p>
+    <div class="meta"><span class="badge grey">Coming soon</span></div>
+  </div>
+
+  <div class="card soon">
+    <h3>Talks</h3>
+    <p>Slides and recordings.</p>
+    <div class="meta"><span class="badge grey">Coming soon</span></div>
+  </div>
+
+</div>
+
+<hr class="rule">
+
+<h2 class="sect">Latest</h2>
+<ul class="docs">
+  <li>
+    <a href="/istio-proposals/secretless-control-plane/">
+      <div>
+        <p class="t">Secretless control plane</p>
+        <p class="d">Why istiod holds a cluster-wide <code>get/watch/list secrets</code> grant today, and what
+        an opt-in mode that moves credential resolution to the gateway would look like.</p>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </li>
+</ul>
+
+<footer>
+  Built as plain HTML, hosted on GitHub Pages ·
+  <a href="https://github.com/jewertow/jewertow.github.io">source</a>
+</footer>
+
+</div>
+</body>
+</html>

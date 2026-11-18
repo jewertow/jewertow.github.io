@@ -1,0 +1,76 @@
+/* Shared chrome for jewertow.github.io — matches the palette used by the diagram pages. */
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --blue:#2563eb; --blue-bg:#eff5ff; --teal:#0d9488; --teal-bg:#ecfbf7;
+  --violet:#7c3aed; --violet-bg:#f4f0fe; --amber:#b45309; --amber-bg:#fff7ec;
+  --red:#c2410c; --red-strong:#b91c1c; --red-bg:#fdecec; --green:#15803d; --green-bg:#eaf7ef;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 28px 72px;background:var(--bg);color:var(--ink);
+     font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto}
+a{color:var(--blue)}
+
+/* ---------- breadcrumbs ---------- */
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin:0 0 20px}
+.crumbs a{color:var(--muted);text-decoration:none;font-weight:600}
+.crumbs a:hover{color:var(--ink);text-decoration:underline}
+.crumbs .sep{color:#cbd5e1}
+.crumbs .here{color:#334155;font-weight:600}
+
+/* ---------- page header ---------- */
+.page-head{margin-bottom:30px}
+.page-head h1{font-size:28px;line-height:1.2;margin:0 0 8px;letter-spacing:-.015em}
+.page-head .sub{color:var(--muted);margin:0;max-width:74ch}
+
+.site-head{display:flex;align-items:flex-start;justify-content:space-between;gap:28px;flex-wrap:wrap;
+           margin:8px 0 38px}
+.site-head h1{font-size:34px;line-height:1.15;margin:0 0 10px;letter-spacing:-.02em}
+.site-head .role{color:#334155;margin:0 0 10px;font-size:16px}
+.site-head .bio{color:var(--muted);margin:0;max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{display:inline-block;padding:7px 13px;border-radius:8px;border:1px solid var(--line);
+         background:var(--card);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}
+.links a:hover{border-color:#cbd5e1;background:#fbfcfe}
+
+/* ---------- sections ---------- */
+h2.sect{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+        margin:0 0 14px;font-weight:700}
+.rule{border:0;border-top:1px solid var(--line);margin:36px 0 22px}
+
+/* ---------- cards ---------- */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:20px 22px;box-shadow:0 1px 2px rgba(15,23,42,.04);text-decoration:none;color:inherit}
+a.card:hover{border-color:#b9c6d8;box-shadow:0 4px 14px rgba(15,23,42,.07);transform:translateY(-1px)}
+a.card{transition:border-color .15s,box-shadow .15s,transform .15s}
+.card h3{margin:0 0 6px;font-size:17px;letter-spacing:-.01em}
+.card p{margin:0;color:var(--muted);font-size:13.5px}
+.card .meta{margin-top:12px;font-size:12px;color:#94a3b8;display:flex;gap:10px;flex-wrap:wrap}
+.card.soon{opacity:.62}
+
+/* ---------- document list ---------- */
+.docs{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.docs a{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+        border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;
+        transition:border-color .15s,box-shadow .15s}
+.docs a:hover{border-color:#b9c6d8;box-shadow:0 4px 14px rgba(15,23,42,.07)}
+.docs .t{font-weight:650;font-size:15px;margin:0 0 3px}
+.docs .d{color:var(--muted);font-size:13.5px;margin:0}
+.docs .arrow{margin-left:auto;color:#94a3b8;font-size:18px;line-height:1.2}
+
+/* ---------- badges ---------- */
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;
+       letter-spacing:.07em;text-transform:uppercase;border:1px solid transparent;white-space:nowrap}
+.badge.red{background:var(--red-bg);color:var(--red-strong);border-color:#f3c7c7}
+.badge.green{background:var(--green-bg);color:var(--green);border-color:#bfe3cc}
+.badge.violet{background:var(--violet-bg);color:var(--violet);border-color:#d8c9f7}
+.badge.grey{background:#f1f5f9;color:#64748b;border-color:#e2e8f0}
+
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;
+     background:#f1f5f9;border-radius:4px;padding:1px 5px}
+
+footer{margin-top:54px;padding-top:18px;border-top:1px solid var(--line);
+       color:#94a3b8;font-size:12.5px}
+footer a{color:#64748b}

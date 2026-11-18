@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secretless control plane — Istio proposals</title>
+<meta name="description" content="An opt-in Istio mode where the gateway resolves its own Secrets under Kubernetes RBAC instead of istiod brokering them.">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumbs">
+  <a href="/">Home</a><span class="sep">/</span>
+  <a href="/istio-proposals/">Istio proposals</a><span class="sep">/</span>
+  <span class="here">Secretless control plane</span>
+</nav>
+
+<header class="page-head">
+  <h1>Secretless control plane</h1>
+  <p class="sub">Today istiod is a credential broker: it holds <code>get/watch/list secrets</code> cluster-wide,
+  reads gateway certificates from a cluster-wide informer, and decides in its own process whether the proxy may
+  have them. This proposal adds an opt-in mode — <code>pilot.secretless.enabled=true</code> — in which istio-agent
+  resolves <code>kubernetes://</code> credentials from its own namespace with the pod's projected token, so the
+  Kubernetes API server's RBAC evaluation becomes the thing that enforces the decision.</p>
+</header>
+
+<h2 class="sect">Architecture pages</h2>
+<ul class="docs">
+  <li>
+    <a href="current-architecture.html">
+      <div>
+        <p class="t">Current: istiod as credential broker <span class="badge red">Today</span></p>
+        <p class="d">The flow as it exists since Istio 1.8 — SDS over the ADS stream, <code>SecretGen</code>,
+        the cluster-wide Secret informer, and the SubjectAccessReview that makes istiod's decision correct but
+        not RBAC-enforced.</p>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </li>
+  <li>
+    <a href="secretless-architecture.html">
+      <div>
+        <p class="t">Secretless: the gateway reads its own Secrets <span class="badge green">Proposed</span></p>
+        <p class="d">istio-agent regains a Kubernetes client and serves credentials to Envoy over the SDS socket
+        it already owns. Covers the new RBAC on both sides, the accepted limitations, and the open question for
+        maintainers.</p>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </li>
+</ul>
+
+<footer>
+  <a href="/istio-proposals/">← Back to Istio proposals</a>
+</footer>
+
+</div>
+</body>
+</html>

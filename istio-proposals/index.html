@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Istio proposals — Jacek Ewertowski</title>
+<meta name="description" content="Design proposals and architecture write-ups for Istio.">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumbs">
+  <a href="/">Home</a><span class="sep">/</span><span class="here">Istio proposals</span>
+</nav>
+
+<header class="page-head">
+  <h1>Istio proposals</h1>
+  <p class="sub">Design proposals and the architecture diagrams that go with them. Each proposal has a page
+  per architecture — what the mesh does today, and what the change would make it do instead.</p>
+</header>
+
+<h2 class="sect">Proposals</h2>
+<ul class="docs">
+  <li>
+    <a href="/istio-proposals/secretless-control-plane/">
+      <div>
+        <p class="t">Secretless control plane <span class="badge violet">Draft</span></p>
+        <p class="d">istiod currently reads every Secret in the cluster to serve gateway certificates over SDS.
+        This proposal adds an opt-in mode where the gateway resolves its own credentials, so the Secret read is
+        authorized by Kubernetes RBAC instead of in istiod's process.</p>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </li>
+</ul>
+
+<footer>
+  <a href="/">← Back to home</a>
+</footer>
+
+</div>
+</body>
+</html>

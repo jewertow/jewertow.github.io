@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Current: istiod as credential broker</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --blue:#2563eb; --blue-bg:#eff5ff; --teal:#0d9488; --teal-bg:#ecfbf7;
+    --violet:#7c3aed; --violet-bg:#f4f0fe; --amber:#b45309; --amber-bg:#fff7ec;
+    --red:#c2410c; --red-strong:#b91c1c; --red-bg:#fdecec; --green:#15803d; --green-bg:#eaf7ef;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 28px 64px;background:var(--bg);color:var(--ink);
+       font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1380px;margin:0 auto}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+  h1{font-size:26px;line-height:1.25;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0;max-width:72ch}
+  .badge{display:inline-block;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;
+         letter-spacing:.07em;text-transform:uppercase;background:var(--red-bg);color:var(--red-strong);
+         border:1px solid #f3c7c7}
+  .nav a{display:inline-block;margin-left:8px;padding:7px 13px;border-radius:8px;border:1px solid var(--line);
+         background:var(--card);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}
+  .nav a:hover{border-color:#cbd5e1;background:#fbfcfe}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:22px;
+        box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .card.flush{padding:14px}
+  h2{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:700}
+  svg{display:block;width:100%;height:auto}
+  .grid{display:grid;gap:22px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(390px,1fr))}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{position:relative;padding:0 0 14px 42px;counter-increment:s}
+  ol.steps li:last-child{padding-bottom:0}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+    background:#1e293b;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  ol.steps li.red::before{background:var(--red-strong)}
+  ol.steps b{font-weight:650}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{font-size:.9em;background:#f1f5f9;border-radius:4px;padding:1px 5px}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow:auto;font-size:12.5px;line-height:1.55;margin:0}
+  pre .c{color:#7f93b0}
+  pre .k{color:#7dd3fc}
+  pre .danger{color:#fca5a5;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;font-size:12.5px;color:#334155}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .sw{width:26px;height:0;border-top-width:2.5px;border-top-style:solid;display:inline-block}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:0}
+  .note{font-size:12.5px;color:var(--muted);margin:14px 0 0}
+  .note b{color:#334155}
+  .fn{font-size:12px;color:var(--muted);line-height:1.8}
+  .fn code{background:#eef2f7}
+  .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin:0 0 18px}
+  .crumbs a{color:var(--muted);text-decoration:none;font-weight:600}
+  .crumbs a:hover{color:var(--ink);text-decoration:underline}
+  .crumbs .sep{color:#cbd5e1}
+  .crumbs .here{color:#334155;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumbs">
+  <a href="/">Home</a><span class="sep">/</span>
+  <a href="/istio-proposals/">Istio proposals</a><span class="sep">/</span>
+  <a href="/istio-proposals/secretless-control-plane/">Secretless control plane</a><span class="sep">/</span>
+  <span class="here">Current architecture</span>
+</nav>
+
+<header>
+  <div>
+    <span class="badge">Current — default, Istio 1.8 → today</span>
+    <h1 style="margin-top:10px">istiod as credential broker</h1>
+    <p class="sub">Envoy never talks to the Kubernetes API. It asks for <code>kubernetes://my-cert</code> over SDS, istio-agent
+    proxies that request to istiod, and istiod serves the bytes from a <b>cluster-wide Secret informer</b> after deciding, in
+    process, whether the gateway is allowed to have it — using a <b>SubjectAccessReview</b>.</p>
+  </div>
+  <nav class="nav"><a href="secretless-architecture.html">Secretless mode →</a></nav>
+</header>
+
+<div class="card flush">
+<svg viewBox="0 0 1340 660" role="img" aria-label="Current Istio credential flow: Envoy to istio-agent to istiod to Kubernetes API server">
+  <style>
+    .colhdr{font:700 11px ui-sans-serif,system-ui,sans-serif;fill:#94a3b8;letter-spacing:1.1px}
+    .nsttl{font:700 12px ui-sans-serif,system-ui,sans-serif;fill:#475569;letter-spacing:.3px}
+    .bt{font:700 16px ui-sans-serif,system-ui,sans-serif;fill:#0f172a}
+    .bs{font:400 11px ui-sans-serif,system-ui,sans-serif;fill:#64748b}
+    .row{font:400 11px ui-sans-serif,system-ui,sans-serif;fill:#334155}
+    .mono{font:400 10px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#334155}
+    .mono9{font:400 9.5px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#334155}
+    .lbl{font:600 10.5px ui-sans-serif,system-ui,sans-serif;fill:#475569}
+    .lblmono{font:400 10px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#64748b}
+    .num{font:700 11px ui-sans-serif,system-ui,sans-serif;fill:#ffffff}
+    .warn{fill:#b91c1c}
+    .sectlbl{font:700 9.5px ui-sans-serif,system-ui,sans-serif;fill:#94a3b8;letter-spacing:.9px}
+  </style>
+  <defs>
+    <marker id="aGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+    <marker id="aTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0d9488"/></marker>
+    <marker id="aViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+    <marker id="aRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  </defs>
+
+  <rect x="0" y="0" width="1340" height="660" fill="#ffffff" rx="10"/>
+
+  <!-- column headers -->
+  <text class="colhdr" x="240"  y="34" text-anchor="middle">DATA PLANE</text>
+  <text class="colhdr" x="700"  y="34" text-anchor="middle">CONTROL PLANE</text>
+  <text class="colhdr" x="1150" y="34" text-anchor="middle">KUBERNETES</text>
+
+  <!-- ============ GATEWAY POD ============ -->
+  <rect x="40" y="70" width="400" height="400" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <path d="M40 102 H440" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="40" y="70" width="400" height="32" rx="12" fill="#eef2f7"/>
+  <rect x="40" y="90" width="400" height="12" fill="#eef2f7"/>
+  <text class="nsttl" x="60" y="91">Gateway pod · namespace gateway-ns</text>
+
+  <!-- Envoy -->
+  <rect x="64" y="130" width="352" height="100" rx="10" fill="#eff5ff" stroke="#93b4f5" stroke-width="1.5"/>
+  <text class="bt" x="82" y="156">Envoy</text>
+  <text class="bs" x="82" y="172">gateway proxy — terminates TLS for the Gateway</text>
+  <path d="M82 182 H400" stroke="#cdddfb"/>
+  <text class="mono9" x="82" y="198">kubernetes://my-cert   sds_config: <tspan font-weight="700" fill="#1d4ed8">ads {}</tspan>  → over XDS</text>
+  <text class="mono9" x="82" y="216">default / ROOTCA       sds_config: <tspan font-weight="700" fill="#0f766e">sds-grpc</tspan> UDS</text>
+
+  <!-- vertical connectors Envoy <-> agent -->
+  <path d="M150 230 V330" stroke="#0d9488" stroke-width="2" marker-start="url(#aTeal)" marker-end="url(#aTeal)"/>
+  <path d="M330 230 V330" stroke="#2563eb" stroke-width="2" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <circle cx="150" cy="247" r="9.5" fill="#0d9488"/><text class="num" x="150" y="251" text-anchor="middle">5</text>
+  <circle cx="330" cy="247" r="9.5" fill="#2563eb"/><text class="num" x="330" y="251" text-anchor="middle">1</text>
+
+  <rect x="85" y="262" width="130" height="38" rx="8" fill="#ffffff" stroke="#0d9488" stroke-width="1.2"/>
+  <text class="lbl" x="150" y="277" text-anchor="middle" fill="#0d9488">SDS · UDS</text>
+  <text class="lblmono" x="150" y="291" text-anchor="middle">default, ROOTCA</text>
+
+  <rect x="265" y="262" width="130" height="38" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.2"/>
+  <text class="lbl" x="330" y="277" text-anchor="middle" fill="#2563eb">SDS over ADS</text>
+  <text class="lblmono" x="330" y="291" text-anchor="middle">kubernetes://…</text>
+
+  <!-- istio-agent -->
+  <rect x="64" y="330" width="352" height="110" rx="10" fill="#ecfbf7" stroke="#5fc8b4" stroke-width="1.5"/>
+  <text class="bt" x="82" y="356">istio-agent</text>
+  <text class="bs" x="82" y="372">pilot-agent, same pod as Envoy</text>
+  <path d="M82 381 H400" stroke="#bfeae1"/>
+  <text class="row" x="82" y="397">▪ SDS server on UDS — workload cert only</text>
+  <text class="row" x="82" y="413">▪ xds-proxy — forwards the ADS stream to istiod,</text>
+  <text class="row" x="98" y="428">   <tspan class="mono9">Secret</tspan> resources included, untouched</text>
+
+  <!-- ============ CONTROL PLANE ============ -->
+  <rect x="540" y="70" width="320" height="400" rx="12" fill="#faf9fe" stroke="#cbd5e1" stroke-width="1.5"/>
+  <path d="M540 102 H860" stroke="#cbd5e1" stroke-width="1.5"/>
+  <rect x="540" y="70" width="320" height="32" rx="12" fill="#eef2f7"/>
+  <rect x="540" y="90" width="320" height="12" fill="#eef2f7"/>
+  <text class="nsttl" x="560" y="91">namespace istio-system</text>
+
+  <rect x="564" y="150" width="272" height="250" rx="10" fill="#f4f0fe" stroke="#b49df0" stroke-width="1.5"/>
+  <text class="bt" x="582" y="178">istiod</text>
+  <text class="bs" x="582" y="194">discovery + CA + credential broker</text>
+  <path d="M582 204 H818" stroke="#ded3fa"/>
+  <text class="row" x="582" y="222">▪ ADS server · SecretGen → serves SDS</text>
+  <text class="row" x="598" y="237">   <tspan class="mono9">Secret</tspan> resources to the proxy</text>
+  <text class="row" x="582" y="256">▪ CA server → CreateCertificate</text>
+
+  <rect x="582" y="266" width="236" height="26" rx="6" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="mono9" x="594" y="283" fill="#b91c1c">cluster-wide Secret informer · all ns</text>
+
+  <text class="sectlbl" x="582" y="312">AUTHORIZATION DECIDED HERE, IN PROCESS</text>
+  <text class="mono9" x="582" y="330">kubernetes://        → SubjectAccessReview</text>
+  <text class="mono9" x="582" y="346">kubernetes-gateway:// → ReferenceGrant</text>
+
+  <rect x="582" y="356" width="236" height="26" rx="6" fill="#fff7ec" stroke="#f0cf9a"/>
+  <text class="mono9" x="594" y="373" fill="#b45309">invisible in the cluster RBAC graph</text>
+
+  <!-- agent <-> istiod -->
+  <path d="M416 360 H564" stroke="#2563eb" stroke-width="2" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <circle cx="430" cy="340" r="9.5" fill="#2563eb"/><text class="num" x="430" y="344" text-anchor="middle">2</text>
+  <text class="lbl" x="500" y="345" text-anchor="middle" fill="#2563eb">ADS/XDS · :15012</text>
+  <text class="lblmono" x="492" y="378" text-anchor="middle">carries SDS Secret</text>
+
+  <path d="M416 425 H564" stroke="#0d9488" stroke-width="2" marker-end="url(#aTeal)"/>
+  <circle cx="440" cy="405" r="9.5" fill="#0d9488"/><text class="num" x="440" y="409" text-anchor="middle">6</text>
+  <text class="lbl" x="495" y="410" text-anchor="middle" fill="#0d9488">CA gRPC · :15012</text>
+  <text class="lblmono" x="495" y="443" text-anchor="middle">CreateCertificate</text>
+
+  <!-- ============ API SERVER ============ -->
+  <rect x="1000" y="70" width="300" height="460" rx="12" fill="#fffdf8" stroke="#e3bd84" stroke-width="1.5"/>
+  <path d="M1000 122 H1300" stroke="#f0d9b8"/>
+  <text class="bt" x="1018" y="100">Kubernetes API server</text>
+  <text class="bs" x="1018" y="115">authorization: RBAC</text>
+
+  <text class="sectlbl" x="1018" y="146">SECRETS</text>
+  <rect x="1018" y="156" width="264" height="26" rx="6" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="mono9" x="1030" y="173">gateway-ns / my-cert</text>
+  <rect x="1018" y="188" width="264" height="26" rx="6" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="mono9" x="1030" y="205">app-ns / db-password</text>
+  <rect x="1018" y="220" width="264" height="26" rx="6" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="mono9" x="1030" y="237">kube-system / bootstrap-token-…</text>
+  <rect x="1018" y="252" width="264" height="26" rx="6" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="mono9" x="1030" y="269">team-x-ns / …  (never met the mesh)</text>
+  <text class="row" x="1018" y="294" fill="#b91c1c">↑ all of them readable by istiod</text>
+
+  <rect x="1018" y="310" width="264" height="84" rx="8" fill="#fff7ec" stroke="#f0cf9a"/>
+  <text class="sectlbl" x="1030" y="330">SUBJECTACCESSREVIEWS · CREATE</text>
+  <text class="mono9" x="1030" y="348">istiod asks the API server:</text>
+  <text class="mono9" x="1030" y="364">“may gateway-ns:gw-sa <tspan font-weight="700">list secrets</tspan></text>
+  <text class="mono9" x="1030" y="378">in gateway-ns?” → allowed / denied</text>
+
+  <rect x="1018" y="410" width="264" height="100" rx="8" fill="#fdecec" stroke="#f0b4b4"/>
+  <text class="sectlbl" x="1030" y="430" fill="#b91c1c">THE GRANT AUDITORS FLAG</text>
+  <text class="mono9" x="1030" y="449">ClusterRole/istiod</text>
+  <text class="mono9" x="1030" y="465">  apiGroups: [""]</text>
+  <text class="mono9" x="1030" y="481">  resources: ["secrets"]</text>
+  <text class="mono9" x="1030" y="497" font-weight="700" fill="#b91c1c">  verbs: ["get","watch","list"]  cluster-wide</text>
+
+  <!-- istiod -> API -->
+  <path d="M836 230 H1000" stroke="#b91c1c" stroke-width="2.4" marker-end="url(#aRed)"/>
+  <circle cx="852" cy="210" r="9.5" fill="#b91c1c"/><text class="num" x="852" y="214" text-anchor="middle">3</text>
+  <text class="lbl" x="938" y="215" text-anchor="middle" fill="#b91c1c">get / watch secrets</text>
+  <text class="lblmono" x="930" y="248" text-anchor="middle" fill="#b91c1c">every namespace</text>
+
+  <path d="M836 330 H1000" stroke="#b45309" stroke-width="2" marker-start="url(#aGrey)" marker-end="url(#aGrey)"/>
+  <circle cx="852" cy="310" r="9.5" fill="#b45309"/><text class="num" x="852" y="314" text-anchor="middle">4</text>
+  <text class="lbl" x="940" y="315" text-anchor="middle" fill="#b45309">SubjectAccessReview</text>
+  <text class="lblmono" x="930" y="348" text-anchor="middle">about the gateway SA</text>
+
+  <!-- no API access from the pod -->
+  <path d="M240 440 V592 H1140 V530" stroke="#94a3b8" stroke-width="2" stroke-dasharray="7 6" fill="none" opacity=".75"/>
+  <circle cx="690" cy="592" r="15" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <path d="M683 585 L697 599 M697 585 L683 599" stroke="#64748b" stroke-width="2.4"/>
+  <text class="lbl" x="690" y="626" text-anchor="middle" fill="#64748b">The gateway pod holds no Kubernetes client and needs no Secret RBAC — that was the point of moving gateway SDS to istiod in 1.8</text>
+</svg>
+</div>
+
+<div class="card">
+  <h2>Legend</h2>
+  <div class="legend">
+    <span><i class="sw" style="border-color:#0d9488"></i> SDS over the agent's UDS socket (<code>sds-grpc</code>) / CA gRPC</span>
+    <span><i class="sw" style="border-color:#2563eb"></i> SDS carried on the ADS/XDS stream</span>
+    <span><i class="sw" style="border-color:#b91c1c"></i> Kubernetes API call made with istiod's cluster-wide grant</span>
+    <span><i class="sw" style="border-color:#94a3b8;border-top-style:dashed"></i> connection that does not exist</span>
+    <span><i class="dot" style="background:#fdecec;border:1px solid #f0b4b4"></i> blast radius</span>
+  </div>
+</div>
+
+<div class="grid g2">
+  <div class="card">
+    <h2>The credential path, step by step</h2>
+    <ol class="steps">
+      <li><b>Envoy → istio-agent.</b> istiod generated the listener with <code>sds_config: ads {}</code> for
+      <code>kubernetes://my-cert</code>, so the SDS request travels on Envoy's existing <b>ADS stream</b> to the agent's
+      xds-proxy UDS, not on the <code>sds-grpc</code> socket.</li>
+      <li><b>istio-agent → istiod.</b> The agent does not interpret <code>Secret</code> resources; the xds-proxy forwards the
+      subscription upstream over the mTLS/JWT XDS connection on port 15012.</li>
+      <li class="red"><b>istiod → API server.</b> <code>SecretGen</code> reads the Secret from a <b>cluster-wide informer</b>,
+      backed by <code>get/watch/list secrets</code> in istiod's ClusterRole. One grant, every namespace.</li>
+      <li class="red"><b>istiod → API server (SAR).</b> Before serving the bytes, istiod asks the API server whether the
+      gateway's own service account could <code>list secrets</code> in that namespace. The answer is advisory only — istiod
+      already holds the Secret either way, and it is istiod that enforces the result.</li>
+      <li><b>Envoy → istio-agent (workload identity).</b> <code>default</code> and <code>ROOTCA</code> use the
+      <code>sds-grpc</code> UDS and are served by the agent locally. Unchanged by this proposal.</li>
+      <li><b>istio-agent → istiod CA.</b> The agent signs a CSR via <code>CreateCertificate</code> on 15012 using its
+      projected token. Not SDS, and also unchanged.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Who decides, and with what</h2>
+    <table>
+      <tr><th>Reference</th><th>Check performed by istiod</th></tr>
+      <tr><td><code>kubernetes://</code><br><span style="color:#64748b;font-size:12px">Istio <code>Gateway</code> credentialName</span></td>
+          <td>Same namespace as the proxy <b>and</b> a <b>SubjectAccessReview</b> for <code>list secrets</code> as
+          <code>system:serviceaccount:&lt;ns&gt;:&lt;sa&gt;</code>, cached. Cross-namespace is always denied.</td></tr>
+      <tr><td><code>kubernetes-gateway://</code><br><span style="color:#64748b;font-size:12px">Gateway API</span></td>
+          <td>Reference must appear in <code>VerifiedCertificateReferences</code> — same namespace, or a
+          <b>ReferenceGrant</b>. No SAR.</td></tr>
+      <tr><td><code>kubernetes-configmap://</code></td><td>Allowed; only <code>ca.crt</code> is exposed.</td></tr>
+    </table>
+    <p class="note"><b>Why this is the finding.</b> The SAR makes istiod's decision <i>correct</i>, but it does not make it
+    <i>enforced by the API server</i>. The only RBAC rule the cluster actually evaluates for the Secret read is istiod's own
+    cluster-wide one. An auditor reading the RBAC graph sees a control plane that can read every Secret in the cluster; an
+    attacker who reaches a token in <code>istio-system</code> inherits exactly that.</p>
+  </div>
+</div>
+
+<div class="grid g2">
+  <div class="card">
+    <h2>istiod RBAC today — ClusterRole</h2>
+<pre><span class="c"># manifests/charts/istio-control/istio-discovery/templates/clusterrole.yaml</span>
+<span class="c"># Needed for multicluster secret reading, possibly ingress certs in the future</span>
+- <span class="k">apiGroups</span>: [""]
+  <span class="k">resources</span>: [<span class="danger">"secrets"</span>]
+  <span class="k">verbs</span>: [<span class="danger">"get", "watch", "list"</span>]        <span class="c"># ← cluster-wide</span>
+
+- <span class="k">apiGroups</span>: ["authorization.k8s.io"]
+  <span class="k">resources</span>: ["subjectaccessreviews"]
+  <span class="k">verbs</span>: ["create"]                      <span class="c"># ← the SAR in step 4</span></pre>
+    <p class="note">No namespace selector can narrow this: <code>discoverySelectors</code> and informer label selectors filter
+    <i>after</i> the API server has authorized a cluster-wide list.</p>
+  </div>
+
+  <div class="card">
+    <h2>What the broker model buys</h2>
+    <table>
+      <tr><th>Gain</th><th>Cost</th></tr>
+      <tr><td>One informer for the whole cluster — low API-server load however many gateways you run</td>
+          <td>One grant with cluster-wide blast radius</td></tr>
+      <tr><td>Gateway pods need no Kubernetes API access at all</td>
+          <td>Authorization lives in istiod's process, not in RBAC</td></tr>
+      <tr><td>Cross-namespace certificate references via ReferenceGrant — fully Gateway API conformant</td>
+          <td>Consent is enforced by the thing that is also the broker</td></tr>
+    </table>
+    <p class="note">These are real gains, and they are why this mode stays the default. The proposal adds an alternative for
+    operators who rank blast-radius containment above them.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Where this lives in the code</h2>
+  <p class="fn">
+    <code>pilot/pkg/security/model/authentication.go</code> — <code>SDSAdsConfig</code> and
+    <code>constructSdsSecretConfigForCredential()</code>: <code>kubernetes://</code> names get <code>ads {}</code>, which is why
+    the request rides the XDS stream rather than the agent's SDS socket.<br>
+    <code>pkg/model/authentication.go</code> — <code>SDSClusterName = "sds-grpc"</code>: the UDS path used for
+    <code>default</code> / <code>ROOTCA</code>.<br>
+    <code>pilot/pkg/xds/sds.go</code> — <code>filterAuthorizedResources()</code>: the four reference cases and where
+    <code>Authorize()</code> is called.<br>
+    <code>pilot/pkg/credentials/kube/secrets.go</code> — <code>Authorize()</code>: builds the
+    <code>SubjectAccessReview</code> (<code>verb: list</code>, <code>resource: secrets</code>) for the proxy's service account
+    and groups, with a TTL cache.<br>
+    <code>manifests/charts/istio-control/istio-discovery/templates/clusterrole.yaml</code> — the <code>secrets</code> rule.
+  </p>
+</div>
+
+</div>
+</body>
+</html>
